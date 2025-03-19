@@ -340,13 +340,13 @@ module fir_tb
                 end
                 begin: ar_proc2
                     for(p=0; p<Tape_Num; p=p+1) begin
-                        while (p >= m || q >= m) @(posedge axis_clk);
+                        while (p >= m) @(posedge axis_clk);
                         axi_ar(12'h040+4*p);
                     end
                 end
                 begin: r_proc2
                     for(q=0; q<Tape_Num; q=q+1) begin
-                        while (p >= m || q >= m) @(posedge axis_clk);
+                        while (q >= m) @(posedge axis_clk);
                         axi_r();
                         axi_read_check(coef[q], 32'hffff_ffff);
                     end
@@ -416,13 +416,13 @@ module fir_tb
                 end
                 begin: ar_proc3
                     for(p=0; p<Tape_Num; p=p+1) begin
-                        while (p >= m || q >= m) @(posedge axis_clk);
+                        while (p >= m) @(posedge axis_clk);
                         axi_ar(12'h040+4*p);
                     end
                 end
                 begin: r_proc3
                     for(q=0; q<Tape_Num; q=q+1) begin
-                        while (p >= m || q >= m) @(posedge axis_clk);
+                        while (q >= m) @(posedge axis_clk);
                         axi_r();
                         axi_read_check(coef[q], 32'hffff_ffff);
                     end
@@ -614,13 +614,13 @@ module fir_tb
                 end
                 begin
                     for(p=0; p<Tape_Num; p=p+1) begin
-                        while (p >= m || q >= m) @(posedge axis_clk);
+                        while (p >= m) @(posedge axis_clk);
                         axi_ar(12'h040+4*p);
                     end
                 end
                 begin
                     for(q=0; q<Tape_Num; q=q+1) begin
-                        while (p >= m || q >= m) @(posedge axis_clk);
+                        while (q >= m) @(posedge axis_clk);
                         axi_r();
                         axi_read_check(32'hffff_ffff, 32'hffff_ffff);
                     end

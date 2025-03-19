@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 ------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2022.1 (lin64) Build 3526262 Mon Apr 18 15:47:01 MDT 2022
-| Date         : Sun Mar 16 09:31:16 2025
+| Date         : Wed Mar 19 08:04:33 2025
 | Host         : ubuntu2004 running 64-bit Ubuntu 20.04.4 LTS
 | Command      : report_timing_summary -file timing.rpt
 | Design       : fir
@@ -136,7 +136,7 @@ Table of Contents
 
     WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
     -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
-      4.154        0.000                      0                  671        0.140        0.000                      0                  671        4.500        0.000                       0                   368  
+      0.904        0.000                      0                  748        0.145        0.000                      0                  748        3.000        0.000                       0                   413  
 
 
 All user specified timing constraints are met.
@@ -147,9 +147,9 @@ All user specified timing constraints are met.
 | -------------
 ------------------------------------------------------------------------------------------------
 
-Clock     Waveform(ns)       Period(ns)      Frequency(MHz)
------     ------------       ----------      --------------
-axis_clk  {0.000 5.000}      10.000          100.000         
+Clock     Waveform(ns)         Period(ns)      Frequency(MHz)
+-----     ------------         ----------      --------------
+axis_clk  {0.000 3.500}        7.000           142.857         
 
 
 ------------------------------------------------------------------------------------------------
@@ -159,7 +159,7 @@ axis_clk  {0.000 5.000}      10.000          100.000
 
 Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
 -----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
-axis_clk            4.154        0.000                      0                  671        0.140        0.000                      0                  671        4.500        0.000                       0                   368  
+axis_clk            0.904        0.000                      0                  748        0.145        0.000                      0                  748        3.000        0.000                       0                   413  
 
 
 ------------------------------------------------------------------------------------------------
@@ -190,26 +190,26 @@ Path Group    From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing 
 From Clock:  axis_clk
   To Clock:  axis_clk
 
-Setup :            0  Failing Endpoints,  Worst Slack        4.154ns,  Total Violation        0.000ns
-Hold  :            0  Failing Endpoints,  Worst Slack        0.140ns,  Total Violation        0.000ns
-PW    :            0  Failing Endpoints,  Worst Slack        4.500ns,  Total Violation        0.000ns
+Setup :            0  Failing Endpoints,  Worst Slack        0.904ns,  Total Violation        0.000ns
+Hold  :            0  Failing Endpoints,  Worst Slack        0.145ns,  Total Violation        0.000ns
+PW    :            0  Failing Endpoints,  Worst Slack        3.000ns,  Total Violation        0.000ns
 ---------------------------------------------------------------------------------------------------
 
 
 Max Delay Paths
 --------------------------------------------------------------------------------------
-Slack (MET) :             4.154ns  (required time - arrival time)
-  Source:                 data_length_reg[4]/C
-                            (rising edge-triggered cell FDCE clocked by axis_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
-  Destination:            ap_done_reg/D
-                            (rising edge-triggered cell FDCE clocked by axis_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+Slack (MET) :             0.904ns  (required time - arrival time)
+  Source:                 state_reg[2]/C
+                            (rising edge-triggered cell FDCE clocked by axis_clk  {rise@0.000ns fall@3.500ns period=7.000ns})
+  Destination:            x_buf_reg[0][0]/CE
+                            (rising edge-triggered cell FDCE clocked by axis_clk  {rise@0.000ns fall@3.500ns period=7.000ns})
   Path Group:             axis_clk
   Path Type:              Setup (Max at Slow Process Corner)
-  Requirement:            10.000ns  (axis_clk rise@10.000ns - axis_clk rise@0.000ns)
-  Data Path Delay:        5.710ns  (logic 3.195ns (55.954%)  route 2.515ns (44.046%))
-  Logic Levels:           11  (CARRY4=8 LUT6=3)
+  Requirement:            7.000ns  (axis_clk rise@7.000ns - axis_clk rise@0.000ns)
+  Data Path Delay:        5.714ns  (logic 1.269ns (22.209%)  route 4.445ns (77.791%))
+  Logic Levels:           5  (LUT3=2 LUT5=2 LUT6=1)
   Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
-    Destination Clock Delay (DCD):    2.128ns = ( 12.128 - 10.000 ) 
+    Destination Clock Delay (DCD):    2.128ns = ( 9.128 - 7.000 ) 
     Source Clock Delay      (SCD):    2.456ns
     Clock Pessimism Removal (CPR):    0.184ns
   Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
@@ -227,61 +227,41 @@ Slack (MET) :             4.154ns  (required time - arrival time)
                          IBUF (Prop_ibuf_I_O)         0.972     0.972 r  axis_clk_IBUF_inst/O
                          net (fo=1, unplaced)         0.800     1.771    axis_clk_IBUF
                          BUFG (Prop_bufg_I_O)         0.101     1.872 r  axis_clk_IBUF_BUFG_inst/O
-                         net (fo=367, unplaced)       0.584     2.456    axis_clk_IBUF_BUFG
-                         FDCE                                         r  data_length_reg[4]/C
+                         net (fo=412, unplaced)       0.584     2.456    axis_clk_IBUF_BUFG
+                         FDCE                                         r  state_reg[2]/C
   -------------------------------------------------------------------    -------------------
-                         FDCE (Prop_fdce_C_Q)         0.478     2.934 r  data_length_reg[4]/Q
-                         net (fo=3, unplaced)         0.664     3.598    data_length[4]
-                         CARRY4 (Prop_carry4_DI[3]_CO[3])
-                                                      0.567     4.165 r  sm_tlast_OBUF_inst_i_34/CO[3]
-                         net (fo=1, unplaced)         0.009     4.174    sm_tlast_OBUF_inst_i_34_n_0
-                         CARRY4 (Prop_carry4_CI_CO[3])
-                                                      0.117     4.291 r  sm_tlast_OBUF_inst_i_33/CO[3]
-                         net (fo=1, unplaced)         0.000     4.291    sm_tlast_OBUF_inst_i_33_n_0
-                         CARRY4 (Prop_carry4_CI_CO[3])
-                                                      0.117     4.408 r  sm_tlast_OBUF_inst_i_21/CO[3]
-                         net (fo=1, unplaced)         0.000     4.408    sm_tlast_OBUF_inst_i_21_n_0
-                         CARRY4 (Prop_carry4_CI_CO[3])
-                                                      0.117     4.525 r  sm_tlast_OBUF_inst_i_20/CO[3]
-                         net (fo=1, unplaced)         0.000     4.525    sm_tlast_OBUF_inst_i_20_n_0
-                         CARRY4 (Prop_carry4_CI_CO[3])
-                                                      0.117     4.642 r  sm_tlast_OBUF_inst_i_19/CO[3]
-                         net (fo=1, unplaced)         0.000     4.642    sm_tlast_OBUF_inst_i_19_n_0
-                         CARRY4 (Prop_carry4_CI_CO[3])
-                                                      0.117     4.759 r  sm_tlast_OBUF_inst_i_14/CO[3]
-                         net (fo=1, unplaced)         0.000     4.759    sm_tlast_OBUF_inst_i_14_n_0
-                         CARRY4 (Prop_carry4_CI_O[2])
-                                                      0.256     5.015 r  sm_tlast_OBUF_inst_i_13/O[2]
-                         net (fo=1, unplaced)         0.905     5.920    sm_tlast1[27]
-                         LUT6 (Prop_lut6_I1_O)        0.301     6.221 r  sm_tlast_OBUF_inst_i_5/O
-                         net (fo=1, unplaced)         0.000     6.221    sm_tlast_OBUF_inst_i_5_n_0
-                         CARRY4 (Prop_carry4_S[1]_CO[2])
-                                                      0.574     6.795 r  sm_tlast_OBUF_inst_i_2/CO[2]
-                         net (fo=3, unplaced)         0.470     7.265    sm_tlast0
-                         LUT6 (Prop_lut6_I1_O)        0.310     7.575 r  state[2]_i_3/O
-                         net (fo=3, unplaced)         0.467     8.042    last_y_transferred
-                         LUT6 (Prop_lut6_I4_O)        0.124     8.166 r  ap_done_i_1/O
-                         net (fo=1, unplaced)         0.000     8.166    ap_done_i_1_n_0
-                         FDCE                                         r  ap_done_reg/D
+                         FDCE (Prop_fdce_C_Q)         0.478     2.934 f  state_reg[2]/Q
+                         net (fo=55, unplaced)        0.826     3.760    state[2]
+                         LUT3 (Prop_lut3_I0_O)        0.295     4.055 f  ss_tready_OBUF_inst_i_4/O
+                         net (fo=23, unplaced)        1.174     5.229    ss_tready_OBUF_inst_i_4_n_0
+                         LUT5 (Prop_lut5_I0_O)        0.124     5.353 f  tap_addr_pre[9]_i_2/O
+                         net (fo=2, unplaced)         0.460     5.813    y_stall
+                         LUT6 (Prop_lut6_I5_O)        0.124     5.937 f  tap_A_OBUF[11]_inst_i_2/O
+                         net (fo=26, unplaced)        0.968     6.905    stall
+                         LUT5 (Prop_lut5_I0_O)        0.124     7.029 r  x_buf_wp[1]_i_2/O
+                         net (fo=4, unplaced)         0.473     7.502    x_buf_wp0
+                         LUT3 (Prop_lut3_I1_O)        0.124     7.626 r  x_buf[0][31]_i_1/O
+                         net (fo=32, unplaced)        0.544     8.170    x_buf[0][31]_i_1_n_0
+                         FDCE                                         r  x_buf_reg[0][0]/CE
   -------------------------------------------------------------------    -------------------
 
                          (clock axis_clk rise edge)
-                                                     10.000    10.000 r  
-                                                      0.000    10.000 r  axis_clk (IN)
-                         net (fo=0)                   0.000    10.000    axis_clk
-                         IBUF (Prop_ibuf_I_O)         0.838    10.838 r  axis_clk_IBUF_inst/O
-                         net (fo=1, unplaced)         0.760    11.598    axis_clk_IBUF
-                         BUFG (Prop_bufg_I_O)         0.091    11.689 r  axis_clk_IBUF_BUFG_inst/O
-                         net (fo=367, unplaced)       0.439    12.128    axis_clk_IBUF_BUFG
-                         FDCE                                         r  ap_done_reg/C
-                         clock pessimism              0.184    12.311    
-                         clock uncertainty           -0.035    12.276    
-                         FDCE (Setup_fdce_C_D)        0.044    12.320    ap_done_reg
+                                                      7.000     7.000 r  
+                                                      0.000     7.000 r  axis_clk (IN)
+                         net (fo=0)                   0.000     7.000    axis_clk
+                         IBUF (Prop_ibuf_I_O)         0.838     7.838 r  axis_clk_IBUF_inst/O
+                         net (fo=1, unplaced)         0.760     8.598    axis_clk_IBUF
+                         BUFG (Prop_bufg_I_O)         0.091     8.689 r  axis_clk_IBUF_BUFG_inst/O
+                         net (fo=412, unplaced)       0.439     9.128    axis_clk_IBUF_BUFG
+                         FDCE                                         r  x_buf_reg[0][0]/C
+                         clock pessimism              0.184     9.311    
+                         clock uncertainty           -0.035     9.276    
+                         FDCE (Setup_fdce_C_CE)      -0.202     9.074    x_buf_reg[0][0]
   -------------------------------------------------------------------
-                         required time                         12.320    
-                         arrival time                          -8.166    
+                         required time                          9.074    
+                         arrival time                          -8.170    
   -------------------------------------------------------------------
-                         slack                                  4.154    
+                         slack                                  0.904    
 
 
 
@@ -289,16 +269,16 @@ Slack (MET) :             4.154ns  (required time - arrival time)
 
 Min Delay Paths
 --------------------------------------------------------------------------------------
-Slack (MET) :             0.140ns  (arrival time - required time)
+Slack (MET) :             0.145ns  (arrival time - required time)
   Source:                 arready_r_reg/C
-                            (rising edge-triggered cell FDCE clocked by axis_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
-  Destination:            arready_r_reg/D
-                            (rising edge-triggered cell FDCE clocked by axis_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+                            (rising edge-triggered cell FDPE clocked by axis_clk  {rise@0.000ns fall@3.500ns period=7.000ns})
+  Destination:            rvalid_r_reg/D
+                            (rising edge-triggered cell FDCE clocked by axis_clk  {rise@0.000ns fall@3.500ns period=7.000ns})
   Path Group:             axis_clk
   Path Type:              Hold (Min at Fast Process Corner)
   Requirement:            0.000ns  (axis_clk rise@0.000ns - axis_clk rise@0.000ns)
-  Data Path Delay:        0.384ns  (logic 0.245ns (63.855%)  route 0.139ns (36.145%))
-  Logic Levels:           1  (LUT2=1)
+  Data Path Delay:        0.389ns  (logic 0.248ns (63.719%)  route 0.141ns (36.281%))
+  Logic Levels:           1  (LUT4=1)
   Clock Path Skew:        0.145ns (DCD - SCD - CPR)
     Destination Clock Delay (DCD):    1.032ns
     Source Clock Delay      (SCD):    0.678ns
@@ -313,14 +293,14 @@ Slack (MET) :             0.140ns  (arrival time - required time)
                          IBUF (Prop_ibuf_I_O)         0.200     0.200 r  axis_clk_IBUF_inst/O
                          net (fo=1, unplaced)         0.337     0.538    axis_clk_IBUF
                          BUFG (Prop_bufg_I_O)         0.026     0.564 r  axis_clk_IBUF_BUFG_inst/O
-                         net (fo=367, unplaced)       0.114     0.678    axis_clk_IBUF_BUFG
-                         FDCE                                         r  arready_r_reg/C
+                         net (fo=412, unplaced)       0.114     0.678    axis_clk_IBUF_BUFG
+                         FDPE                                         r  arready_r_reg/C
   -------------------------------------------------------------------    -------------------
-                         FDCE (Prop_fdce_C_Q)         0.147     0.825 r  arready_r_reg/Q
-                         net (fo=3, unplaced)         0.139     0.963    arready_OBUF
-                         LUT2 (Prop_lut2_I1_O)        0.098     1.061 r  arready_r_i_1/O
-                         net (fo=1, unplaced)         0.000     1.061    arready_r_i_1_n_0
-                         FDCE                                         r  arready_r_reg/D
+                         FDPE (Prop_fdpe_C_Q)         0.147     0.825 r  arready_r_reg/Q
+                         net (fo=4, unplaced)         0.141     0.966    arready_r
+                         LUT4 (Prop_lut4_I3_O)        0.101     1.067 r  rvalid_r_i_1/O
+                         net (fo=1, unplaced)         0.000     1.067    rvalid_r_i_1_n_0
+                         FDCE                                         r  rvalid_r_reg/D
   -------------------------------------------------------------------    -------------------
 
                          (clock axis_clk rise edge)
@@ -330,15 +310,15 @@ Slack (MET) :             0.140ns  (arrival time - required time)
                          IBUF (Prop_ibuf_I_O)         0.389     0.389 r  axis_clk_IBUF_inst/O
                          net (fo=1, unplaced)         0.355     0.744    axis_clk_IBUF
                          BUFG (Prop_bufg_I_O)         0.029     0.773 r  axis_clk_IBUF_BUFG_inst/O
-                         net (fo=367, unplaced)       0.259     1.032    axis_clk_IBUF_BUFG
-                         FDCE                                         r  arready_r_reg/C
+                         net (fo=412, unplaced)       0.259     1.032    axis_clk_IBUF_BUFG
+                         FDCE                                         r  rvalid_r_reg/C
                          clock pessimism             -0.210     0.823    
-                         FDCE (Hold_fdce_C_D)         0.099     0.922    arready_r_reg
+                         FDCE (Hold_fdce_C_D)         0.099     0.922    rvalid_r_reg
   -------------------------------------------------------------------
                          required time                         -0.922    
-                         arrival time                           1.061    
+                         arrival time                           1.067    
   -------------------------------------------------------------------
-                         slack                                  0.140    
+                         slack                                  0.145    
 
 
 
@@ -347,14 +327,14 @@ Slack (MET) :             0.140ns  (arrival time - required time)
 Pulse Width Checks
 --------------------------------------------------------------------------------------
 Clock Name:         axis_clk
-Waveform(ns):       { 0.000 5.000 }
-Period(ns):         10.000
+Waveform(ns):       { 0.000 3.500 }
+Period(ns):         7.000
 Sources:            { axis_clk }
 
 Check Type        Corner  Lib Pin  Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location  Pin
-Min Period        n/a     BUFG/I   n/a            2.155         10.000      7.845                axis_clk_IBUF_BUFG_inst/I
-Low Pulse Width   Slow    FDCE/C   n/a            0.500         5.000       4.500                acc_reg[0]/C
-High Pulse Width  Slow    FDCE/C   n/a            0.500         5.000       4.500                acc_reg[0]/C
+Min Period        n/a     BUFG/I   n/a            2.155         7.000       4.845                axis_clk_IBUF_BUFG_inst/I
+Low Pulse Width   Slow    FDCE/C   n/a            0.500         3.500       3.000                acc_reg[0]/C
+High Pulse Width  Slow    FDCE/C   n/a            0.500         3.500       3.000                acc_reg[0]/C
 
 
 

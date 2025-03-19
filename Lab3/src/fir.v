@@ -116,6 +116,10 @@ module fir
     reg [(pADDR_WIDTH-1):0] tap_A_r;
     reg [(pDATA_WIDTH-1):0] rdata_r;
 
+    reg [(pADDR_WIDTH-1):0] araddr_buf;
+    reg [(pDATA_WIDTH-1):0] rdata_buf;
+    reg rdata_valid;
+
     reg arready_r, rvalid_r;
     reg awready_r, wready_r;
 
@@ -172,12 +176,12 @@ module fir
     // ap_* protocol
     assign ap_cfg_regs = { {(pDATA_WIDTH-3){1'b0}}, ap_idle, ap_done, ap_start };
 
-    assign assert_ap_start = (awaddr == 12'h000) & awvalid & awready  // address check 0x000
-                           & (wdata[0] == 1'b1) & wvalid & wready     // value check
-                        // & !ap_start                                // can be asserted only one time, redundant logic
-                           & state_wait;                              // start when engine is prepared
-    assign deassert_ap_done = (araddr == 12'h000) & arvalid & arready // address check 0x000
-                            & ap_done;                                // only when ap_done = 1, logic for FSM
+    assign assert_ap_start = (awaddr == 12'h000) & awvalid & awready    // address check 0x000
+                           & (wdata[0] == 1'b1) & wvalid & wready       // value check
+                        // & !ap_start                                  // can be asserted only one time, redundant logic
+                           & state_wait;                                // start when engine is prepared
+    assign deassert_ap_done = (araddr_buf == 12'h000) & rvalid & rready // address check 0x000
+                            & ap_done;                                  // only when ap_done = 1
     
     assign x_sampled = ss_tvalid && ss_tready;
     assign last_y_transferred = sm_tvalid && sm_tready && sm_tlast;
@@ -193,8 +197,6 @@ module fir
             // reset: when the first X data is sampled
             end else if (ap_start && x_sampled) begin
                 ap_start <= 0;
-            end else begin
-                ap_start <= ap_start;
             end
         end
     end
@@ -211,8 +213,6 @@ module fir
             //        or restart the engine without reading ap_done
             end else if (deassert_ap_done || assert_ap_start) begin
                 ap_done <= 0;
-            end else begin
-                ap_done <= ap_done;
             end
         end
     end
@@ -228,8 +228,6 @@ module fir
             // set to 1: when the last Y data is transferred 
             end else if (last_y_transferred) begin
                 ap_idle <= 1;
-            end else begin
-                ap_idle <= ap_idle;
             end
         end
     end
@@ -344,7 +342,7 @@ module fir
     //  Section 4: FIR Core
     // ========================================
 
-    // SRAM address generator during calculation
+    // pipeline stage 1: address generation
     always @(posedge axis_clk or negedge axis_rst_n) begin
         if (!axis_rst_n) begin
             tap_addr <= Tape_Num - 1;
@@ -368,7 +366,7 @@ module fir
             tap_addr_pre <= Tape_Num - 1;
             data_addr_pre <= 0;
         end else begin
-            if (state_calc && !stall) begin
+            if (state_calc && (!stall)) begin
                 tap_addr_pre <= tap_addr;
                 data_addr_pre <= data_addr;
             end
@@ -383,68 +381,43 @@ module fir
     assign y_stall = state_calc & acc_valid & (!y_buf_ready);
     assign stall = x_stall | y_stall;
 
-    // pipeline stage 1: access BRAMs
+    // pipeline stage 2: BRAM access
     assign x = data_Do;
     assign h = tap_Do;
 
-    // pipeline stage 2: multiplication
+    // pipeline stage 3: multiplication
+    // pipeline stage 4: addition
     always @(posedge axis_clk or negedge axis_rst_n) begin
         if (!axis_rst_n) begin
             mul <= 0;
-        end else begin
-            if (state_calc) begin
-                if (stall) begin
-                    mul <= mul;
-                end else begin
-                    mul <= $signed(data_Do) * $signed(tap_Do);
-                end
-            end else if (state_init) begin
-                mul <= 0;
-            end
-        end
-    end
-
-    always @(posedge axis_clk or negedge axis_rst_n) begin
-        if (!axis_rst_n) begin
-            mul_tap_addr <= Tape_Num - 1;
-        end else begin
-            if (state_calc) mul_tap_addr <= (stall) ? mul_tap_addr : tap_addr;
-            else if (state_init) mul_tap_addr <= Tape_Num - 1;
-        end
-    end
-
-    // pipeline stage 3: addition
-    always @(posedge axis_clk or negedge axis_rst_n) begin
-        if (!axis_rst_n) begin
             acc <= 0;
         end else begin
-            if (state_calc) begin
-                if (stall) begin
-                    acc <= acc;
-                end else begin
-                    acc <= (add_tap_addr == Tape_Num - 1) ? mul : ($signed(acc) + $signed(mul));
-                end
+            if (state_calc && (!stall)) begin
+                mul <= $signed(x) * $signed(h);
+                acc <= (add_tap_addr == Tape_Num - 1) ? mul : ($signed(acc) + $signed(mul));
             end else if (state_init) begin
+                mul <= 0;
                 acc <= 0;
             end
         end
     end
 
+    // pass tap address to each pipeline stage
     always @(posedge axis_clk or negedge axis_rst_n) begin
         if (!axis_rst_n) begin
             add_tap_addr <= Tape_Num - 1;
-        end else begin
-            if (state_calc) add_tap_addr <= (stall) ? add_tap_addr : mul_tap_addr;
-            else if (state_init) add_tap_addr <= Tape_Num - 1;
-        end
-    end
-
-    always @(posedge axis_clk or negedge axis_rst_n) begin
-        if (!axis_rst_n) begin
+            mul_tap_addr <= Tape_Num - 1;
             out_tap_addr <= Tape_Num - 1;
         end else begin
-            if (state_calc) out_tap_addr <= (stall) ? out_tap_addr : add_tap_addr;
-            else if (state_init) out_tap_addr <= Tape_Num - 1;
+            if (state_calc && (!stall)) begin
+                mul_tap_addr <= tap_addr;
+                add_tap_addr <= mul_tap_addr;
+                out_tap_addr <= add_tap_addr;
+            end else if (state_init) begin
+                add_tap_addr <= Tape_Num - 1;
+                mul_tap_addr <= Tape_Num - 1;
+                out_tap_addr <= Tape_Num - 1;
+            end
         end
     end
 
@@ -457,11 +430,7 @@ module fir
             y_counter <= 0;
         end else begin
             if (state_calc) begin
-                if (sm_tvalid && sm_tready) begin
-                    y_counter <= y_counter + 1;
-                end else begin
-                    y_counter <= y_counter;
-                end
+                if (sm_tvalid && sm_tready) y_counter <= y_counter + 1;
             end else if (state_init) begin
                 y_counter <= 0;
             end
@@ -525,11 +494,9 @@ module fir
     // Section 6: AXI-Lite
     // ========================================
 
-    // FIXED: handle invalid read/write during calculation
     // for AXI handshake signals, during calculation, return the values as during configuration
     // invalid read: return 32'hFFFF_FFFF
     // invalid write: ignore
-
     // priority: read > write
 
     wire is_ram_addr_w, is_ram_addr_r;
@@ -537,7 +504,7 @@ module fir
     assign is_ram_addr_r = &(!araddr[(pADDR_WIDTH-1):7]) & araddr[6];
 
     // Tap RAM
-    assign tap_re = (state_init | state_wait) & is_ram_addr_w & arvalid
+    assign tap_re = (state_init | state_wait) & is_ram_addr_r & arvalid
                   | state_calc;
     assign tap_we = (state_init | state_wait) & is_ram_addr_w & (awvalid & wvalid) & (!arvalid);
 
@@ -571,57 +538,86 @@ module fir
             rdata_r = tap_Do;
         end
     end
-    assign rdata = rdata_r;
+    assign rdata = (rdata_valid) ? rdata_r : rdata_buf;
 
     // AXI Read
+    // return data with one cycle latency
+    // can receive read address in every cycle
 
     // arready
     always @(posedge axis_clk or negedge axis_rst_n) begin
         if (!axis_rst_n) begin
-            arready_r <= 0;
+            arready_r <= 1;
         end else begin
-            if (arvalid && arready) begin
+            // next cycle for write
+            if (!(arvalid && arready) && awvalid && wvalid) begin
                 arready_r <= 0;
-            end else if (arvalid) begin
-                arready_r <= 1;
+            // not need to de-assert unless writing
             end else begin
-                arready_r <= arready;
+                arready_r <= 1;
             end
         end
     end
-    assign arready = arready_r;
+    // only when rdata being read, raddr can be accepted
+    assign arready = arready_r && ((!rvalid) || (rvalid && rready));
 
     // rvalid
     always @(posedge axis_clk or negedge axis_rst_n) begin
         if (!axis_rst_n) begin
             rvalid_r <= 0;
         end else begin
-            if (rvalid && rready) begin
-                rvalid_r <= 0;
-            end else if (arvalid) begin
+            // when address is accepted
+            if (arvalid && arready) begin
                 rvalid_r <= 1;
-            end else begin
-                rvalid_r <= rvalid;
+            // data is accepted by host
+            end else if (rvalid && rready) begin
+                rvalid_r <= 0;
             end
         end
     end
     assign rvalid = rvalid_r;
 
+    // read buffer
+    always @(posedge axis_clk or negedge axis_rst_n) begin
+        if (!axis_rst_n) begin
+            araddr_buf <= 0;
+        end else begin
+            if (arvalid && arready)
+                araddr_buf <= araddr;
+        end
+    end
+
+    always @(posedge axis_clk or negedge axis_rst_n) begin
+        if (!axis_rst_n) begin
+            rdata_buf <= 0;
+        end else begin
+            if (rdata_valid)
+                rdata_buf <= rdata_r;
+        end
+    end
+
+    always @(posedge axis_clk or negedge axis_rst_n) begin
+        if (!axis_rst_n) begin
+            rdata_valid <= 0;
+        end else begin
+            rdata_valid <= (arvalid & arready);
+        end
+    end
+
     // AXI Write
+    // 2 cycles per write operation
 
     // awready
     always @(posedge axis_clk or negedge axis_rst_n) begin
         if (!axis_rst_n) begin
             awready_r <= 0;
         end else begin
-            if (arvalid || rvalid) begin
+            // must be de-asserted in next cycle
+            if (awvalid && awready) begin
                 awready_r <= 0;
-            end else if (awvalid && awready) begin
-                awready_r <= 0;
-            end else if (awvalid && wvalid) begin
+            // when both address and data valid, and raddr not accepted
+            end else if (!(arvalid && arready) && awvalid && wvalid) begin
                 awready_r <= 1;
-            end else begin
-                awready_r <= 0;
             end
         end
     end
@@ -632,14 +628,12 @@ module fir
         if (!axis_rst_n) begin
             wready_r <= 0;
         end else begin
-            if (arvalid || rvalid) begin
+            // must be de-asserted in next cycle
+            if (wvalid && wready) begin
                 wready_r <= 0;
-            end else if (wvalid && wready) begin
-                wready_r <= 0;
-            end else if (awvalid && wvalid) begin
+            // when both address and data valid, and raddr not accepted
+            end else if (!(arvalid && arready) && awvalid && wvalid) begin
                 wready_r <= 1;
-            end else begin
-                wready_r <= 0;
             end
         end
     end
