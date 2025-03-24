@@ -145,7 +145,7 @@ module fir_tb
         data_length = 0;
         Din = $fopen(`DATA_PATH, "r");
         golden = $fopen(`GOLDEN_PATH, "r");
-        for(n=0;n<Data_Num;n=n+1) begin
+        for (n=0; n<Data_Num; n=n+1) begin
             input_data = $fscanf(Din,"%d", Din_list[n]);
             golden_data = $fscanf(golden,"%d", golden_list[n]);
             data_length = data_length + 1;
@@ -227,9 +227,9 @@ module fir_tb
         $display("============= End simualtion =============");
 
         if (cfg_error || sm_error) begin
-            $display("Simualtion FAIL!!!!!");
+            $display("Simualtion FAIL!");
         end else begin
-            $display("Simualtion PASS!!!!!");
+            $display("Simualtion PASS!");
         end
 
         $finish;
@@ -285,8 +285,8 @@ module fir_tb
     task cycle_count;
         begin
             timer <= 0;
-            while(!(ss_tvalid && ss_tready)) @(posedge axis_clk);
-            while(!(sm_tlast && sm_tvalid && sm_tready)) begin
+            while (!(ss_tvalid && ss_tready)) @(posedge axis_clk);
+            while (!(sm_tlast && sm_tvalid && sm_tready)) begin
                 @(posedge axis_clk);
                 timer <= timer + 1;
             end
@@ -308,12 +308,12 @@ module fir_tb
             if (cfg_mode == `RAW) begin
                 fork
                     begin: aw_proc1
-                        for(k=0; k<Tape_Num; k=k+1) begin
+                        for (k=0; k<Tape_Num; k=k+1) begin
                             axi_aw(12'h040+4*k);
                         end
                     end
                     begin: w_proc1
-                        for(m=0; m<Tape_Num; m=m+1) begin
+                        for (m=0; m<Tape_Num; m=m+1) begin
                             axi_w(coef[m]);
                         end
                     end
@@ -533,7 +533,7 @@ module fir_tb
             axis_delay();
             sm_tready <= 1;
             @(posedge axis_clk);
-            while(!sm_tvalid) @(posedge axis_clk);
+            while (!sm_tvalid) @(posedge axis_clk);
             sm_tready <= 0;
         end
     endtask
@@ -542,12 +542,12 @@ module fir_tb
         begin
             fork
                 begin: ss_proc
-                    for(i=0; i<data_length; i=i+1) begin
+                    for (i=0; i<data_length; i=i+1) begin
                         ss(i, Din_list[i]);
                     end
                 end
                 begin: sm_proc
-                    for(j=0; j<data_length; j=j+1) begin
+                    for (j=0; j<data_length; j=j+1) begin
                         sm();
                         axis_out_check(j, golden_list[j]);
                     end
