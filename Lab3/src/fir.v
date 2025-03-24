@@ -3,7 +3,7 @@
 // File: fir.v
 // Auther: dqrengg
 // Reference: https://github.com/bol-edu/caravel-soc_fpga-lab/tree/main/lab-fir
-// Date: 2025 Mar 16
+// Date: 2025 Mar 24
 
 module fir 
 #(  parameter pADDR_WIDTH = 12,
@@ -475,7 +475,7 @@ module fir
                    | state_calc & x_ready & (!stall);
 
     assign data_WE = { 4{data_we} };
-    assign data_EN = data_re | data_we;
+    assign data_EN = 1'b1; // data_re | data_we;
     assign data_Di = (state_init) ? { pDATA_WIDTH{1'b0} } : x_buf_out;
 
     // Data BRAM address
@@ -509,7 +509,7 @@ module fir
     assign tap_we = (state_init | state_wait) & is_ram_addr_w & (awvalid & wvalid) & (!arvalid);
 
     assign tap_WE = { 4{tap_we} };
-    assign tap_EN = tap_we | tap_re;
+    assign tap_EN = 1'b1; // tap_we | tap_re;
     
     assign tap_Di = wdata;
 
@@ -550,7 +550,7 @@ module fir
             arready_r <= 1;
         end else begin
             // next cycle for write
-            if (!(arvalid && arready) && awvalid && wvalid) begin
+            if (!(arvalid && arready) && awvalid && wvalid && !(awready && wready)) begin
                 arready_r <= 0;
             // not need to de-assert unless writing
             end else begin
