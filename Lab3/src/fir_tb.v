@@ -18,7 +18,7 @@
 `define RAW    0
 `define NO_RAW 1
 
-// TODO: need to calculated and configured manually base on your design
+// TODO: need to be calculated and configured manually base on your design
 `define CYCLES_PER_Y 11
 
 module fir_tb
