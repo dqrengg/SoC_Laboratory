@@ -3,7 +3,7 @@
 // File: fir_tb.v
 // Auther: dqrengg
 // Reference: https://github.com/bol-edu/caravel-soc_fpga-lab/tree/main/lab-fir
-// Date: 2025 Mar 24
+// Date: 2025 Mar 31
 
 `define DATA_PATH "./src/samples_triangular_wave.dat"
 `define GOLDEN_PATH "./src/out_gold.dat"
@@ -584,7 +584,9 @@ module fir_tb
     task automatic axis_delay;
         begin
             if (delay_mode == `SHORT_LATENCY) begin: AXIS_SHORT
-                #({$random} % 6);
+                integer delay, z;
+                delay = ({$random} % 6);
+                for (z=0; z<delay-1; z=z+1) @(posedge axis_clk);
             end else if (delay_mode == `LONG_LATENCY) begin: AXIS_LONG
                 integer delay, z;
                 delay = `CYCLES_PER_Y * ({$random} % 4);
