@@ -3,7 +3,9 @@
 // File: fir.v
 // Auther: dqrengg
 // Reference: https://github.com/bol-edu/caravel-soc_fpga-lab/tree/main/lab-fir
-// Date: 2025 Mar 24
+// Date: 2025 Mar 31
+
+(* use_dsp = "no" *)
 
 module fir 
 #(  parameter pADDR_WIDTH = 12,
@@ -290,8 +292,8 @@ module fir
     assign x_buf_empty = (x_buf_wp == x_buf_rp);
     // x_buf inputs
     assign x_buf_in = ss_tdata;
-    assign x_buf_we = state_calc & ss_tvalid & (!stall);
-    assign x_buf_re = x_buf_valid & x_ready & (!stall);
+    assign x_buf_we = ss_tvalid & ss_tready;
+    assign x_buf_re = x_buf_valid & x_ready;
     // x_buf valid, for bypass
     assign x_buf_valid = !x_buf_empty | ss_tvalid;
 
@@ -333,8 +335,8 @@ module fir
     assign y_buf_empty = (y_buf_wp == y_buf_rp);
     // y_buf inputs
     assign y_buf_in = acc;
-    assign y_buf_we = acc_valid & y_buf_ready & (!stall);
-    assign y_buf_re = state_calc & sm_tready & (!stall);
+    assign y_buf_we = acc_valid & y_buf_ready;
+    assign y_buf_re = sm_tvalid & sm_tready;
     // y_buf ready, for bypass
     assign y_buf_ready = !y_buf_full | sm_tready;
 
@@ -360,7 +362,7 @@ module fir
         end
     end
 
-    // for stall
+    // latch the SRAM addr for stall
     always @(posedge axis_clk or negedge axis_rst_n) begin
         if (!axis_rst_n) begin
             tap_addr_pre <= Tape_Num - 1;
@@ -377,8 +379,8 @@ module fir
     assign x_ready = state_calc & (tap_addr == 0);
 
     // stall
-    assign x_stall = state_calc & x_ready & (!x_buf_valid) & !ss_done;
-    assign y_stall = state_calc & acc_valid & (!y_buf_ready);
+    assign x_stall = x_ready & (!x_buf_valid) & !ss_done;
+    assign y_stall = acc_valid & (!y_buf_ready);
     assign stall = x_stall | y_stall;
 
     // pipeline stage 2: BRAM access
@@ -444,14 +446,14 @@ module fir
     // AXIS Master
 
     // already handle sm_tready input before
-    assign sm_tvalid = (acc_valid | (!y_buf_empty)) & state_calc & (!x_stall);
+    assign sm_tvalid = state_calc & (!y_buf_empty | acc_valid);
     assign sm_tlast = sm_tvalid & (y_counter == data_length - 1);
     assign sm_tdata = y_buf_out;
 
     // AXIS Slave
 
     // already handle ss_tvalid and ss_tdata inputs before
-    assign ss_tready = ((!x_buf_full) | x_ready) & state_calc & (!y_stall);
+    assign ss_tready = state_calc & (!x_buf_full | x_ready);
 
     // handle ss_tlast to prevent pipeline stall when no X input
     always @(posedge axis_clk or negedge axis_rst_n) begin
@@ -462,33 +464,29 @@ module fir
                 ss_done <= 0;
             end else if (ss_tvalid && ss_tready && ss_tlast) begin
                 ss_done <= 1;
-            end else begin
-                ss_done <= ss_done;
             end
         end
     end
 
     // Data RAM
     // can be always on, stall control by address
-    assign data_re = state_calc & (!x_ready);
     assign data_we = state_init
                    | state_calc & x_ready & (!stall);
-
     assign data_WE = { 4{data_we} };
-    assign data_EN = 1'b1; // data_re | data_we;
+    assign data_EN = 1'b1;
     assign data_Di = (state_init) ? { pDATA_WIDTH{1'b0} } : x_buf_out;
 
     // Data BRAM address
-    always @(*) begin
-        if (state_init) begin
-            data_A_r = init_addr << 2;
-        end else if (state_calc) begin
-            data_A_r = (stall) ? (data_addr_pre << 2) : (data_addr << 2);
-        end else begin
-            data_A_r = 0 << 2;
-        end
-    end
-    assign data_A = data_A_r;
+    // always @(*) begin
+    //     if (state_init) begin
+    //         data_A_r = init_addr << 2;
+    //     end else if (state_calc) begin
+    //         data_A_r = (stall) ? (data_addr_pre << 2) : (data_addr << 2);
+    //     end else begin
+    //         data_A_r = 0 << 2;
+    //     end
+    // end
+    assign data_A = (state_init) ? (init_addr << 2) : ((stall) ? (data_addr_pre << 2) : (data_addr << 2));
 
     // ========================================
     // Section 6: AXI-Lite
@@ -504,12 +502,9 @@ module fir
     assign is_ram_addr_r = &(!araddr[(pADDR_WIDTH-1):7]) & araddr[6];
 
     // Tap RAM
-    assign tap_re = (state_init | state_wait) & is_ram_addr_r & arvalid
-                  | state_calc;
     assign tap_we = (state_init | state_wait) & is_ram_addr_w & (awvalid & wvalid) & (!arvalid);
-
     assign tap_WE = { 4{tap_we} };
-    assign tap_EN = 1'b1; // tap_we | tap_re;
+    assign tap_EN = 1'b1;
     
     assign tap_Di = wdata;
 
@@ -534,7 +529,7 @@ module fir
             rdata_r = data_length;
         end else if (state_calc && is_ram_addr_r) begin
             rdata_r = 32'hffff_ffff;
-        end else begin
+        end else begin // (!state_calc && is_ram_addr_r)
             rdata_r = tap_Do;
         end
     end
