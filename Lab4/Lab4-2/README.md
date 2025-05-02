@@ -2,6 +2,7 @@
 
 ## Directory Structure
 
+```
 Lab4-2/
 ├─ src/
 │  ├─ cvc-pdk/
@@ -12,6 +13,7 @@ Lab4-2/
 │  ├─ vivado/
 ├─ waveform/
 ├─ README.md
+```
 
 * all source code including testbench in `src`
 * `waveform` only for reference, the final optimized version in `src/testbench/counter_la_fir/`
