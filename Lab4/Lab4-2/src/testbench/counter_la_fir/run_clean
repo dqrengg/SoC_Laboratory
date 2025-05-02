@@ -1,0 +1,3 @@
+rm -rf ./gdb.debug ./gdbwave.debug
+rm -f
+rm -f *.s *.o *.i *.map
