@@ -1,0 +1,23 @@
+rm -f wlos.hex
+
+riscv32-unknown-elf-gcc -Wl,--no-warn-rwx-segments -g \
+	--save-temps \
+	-Xlinker -Map=output.map \
+	-I../../firmware \
+	-DUSER_PROJ_IRQ0_EN \
+	-march=rv32i -mabi=ilp32 -D__vexriscv__ \
+	-Wl,-Bstatic,-T,../../firmware/sections.lds,--strip-discarded \
+	-ffreestanding -nostdlib -o wlos.elf -O2 \
+	../../firmware/crt0_vex.S ../../firmware/isr.c wlos.c qsort.c fir.c
+# -nostartfiles	
+riscv32-unknown-elf-objcopy -O verilog wlos.elf wlos.hex
+riscv32-unknown-elf-objdump -D wlos.elf > wlos.out
+
+# to fix flash base address
+sed -ie 's/@10/@00/g' wlos.hex
+
+iverilog -Ttyp -DFUNCTIONAL -DSIM -DUNIT_DELAY=#1 \
+	-f./include.rtl.list -o wlos.vvp wlos_tb.v
+
+vvp wlos.vvp
+rm -f wlos.vvp wlos.elf wlos.hexe

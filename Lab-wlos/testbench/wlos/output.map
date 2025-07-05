@@ -1,0 +1,221 @@
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+vexriscv_debug   0x00000000f00f0000 0x0000000000000100
+dff              0x0000000000000000 0x0000000000000400
+dff2             0x0000000000000400 0x0000000000000200
+flash            0x0000000010000000 0x0000000001000000
+mprj             0x0000000030000000 0x0000000000100000
+mprjram          0x0000000038000000 0x0000000000004000
+dataram          0x0000000038004000 0x0000000000004000
+hk               0x0000000026000000 0x0000000000100000
+csr              0x00000000f0000000 0x0000000000010000
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+                0x0000000000000000                __DYNAMIC = 0x0
+
+.text           0x0000000010000000      0x19c
+                0x0000000010000000                _ftext = .
+ *crt0*(.text)
+ .text          0x0000000010000000      0x17c wlos.elf-crt0_vex.o
+                0x0000000010000000                _start
+                0x0000000010000020                trap_entry
+ *crt0*(.text)
+ *(.text.isr)
+ *(.text .stub .text.* .gnu.linkonce.t.*)
+ .text          0x000000001000017c       0x20 wlos.elf-isr.o
+                0x000000001000017c                isr
+ .text          0x000000001000019c        0x0 wlos.elf-wlos.o
+ .text          0x000000001000019c        0x0 wlos.elf-qsort.o
+ .text          0x000000001000019c        0x0 wlos.elf-fir.o
+                0x000000001000019c                _etext = .
+
+.rela.dyn       0x000000001000019c        0x0
+ .rela.text     0x000000001000019c        0x0 wlos.elf-crt0_vex.o
+
+.rodata         0x000000001000019c        0x4
+                0x00000000100001a0                . = ALIGN (0x8)
+ *fill*         0x000000001000019c        0x4 
+                0x00000000100001a0                _frodata = .
+ *(.rodata .rodata.* .gnu.linkonce.r.*)
+ *(.rodata1)
+                0x00000000100001a0                . = ALIGN (0x8)
+                0x00000000100001a0                _erodata = .
+
+.data           0x0000000000000000       0x28 load address 0x00000000100001a0
+                0x0000000000000000                . = ALIGN (0x8)
+                0x0000000000000000                _fdata = .
+ *(.data .data.* .gnu.linkonce.d.*)
+ .data          0x0000000000000000        0x0 wlos.elf-crt0_vex.o
+ .data          0x0000000000000000        0x0 wlos.elf-isr.o
+ .data          0x0000000000000000        0x0 wlos.elf-wlos.o
+ .data          0x0000000000000000       0x28 wlos.elf-qsort.o
+                0x0000000000000000                A
+ .data          0x0000000000000028        0x0 wlos.elf-fir.o
+ *(.data1)
+                0x0000000000000030                _gp = ALIGN (0x10)
+ *(.sdata .sdata.* .gnu.linkonce.s.*)
+                0x0000000000000028                . = ALIGN (0x8)
+                0x0000000000000028                _edata = .
+
+.bss            0x0000000000000028        0x8 load address 0x00000000100001c8
+                0x0000000000000028                . = ALIGN (0x8)
+                0x0000000000000028                _fbss = .
+ *(.dynsbss)
+ *(.sbss .sbss.* .gnu.linkonce.sb.*)
+ .sbss          0x0000000000000028        0x4 wlos.elf-isr.o
+                0x0000000000000028                dma_done_flag
+ *(.scommon)
+ *(.dynbss)
+ *(.bss .bss.* .gnu.linkonce.b.*)
+ .bss           0x000000000000002c        0x0 wlos.elf-crt0_vex.o
+ .bss           0x000000000000002c        0x0 wlos.elf-isr.o
+ .bss           0x000000000000002c        0x0 wlos.elf-wlos.o
+ .bss           0x000000000000002c        0x0 wlos.elf-qsort.o
+ .bss           0x000000000000002c        0x0 wlos.elf-fir.o
+ *(COMMON)
+                0x0000000000000030                . = ALIGN (0x8)
+ *fill*         0x000000000000002c        0x4 
+                0x0000000000000030                _ebss = .
+                0x0000000000000030                _end = .
+
+.mprjram        0x0000000038000000      0x378 load address 0x00000000100001c8
+                0x0000000038000000                . = ALIGN (0x8)
+                0x0000000038000000                _fsram = .
+ .mprjram       0x0000000038000000       0xb0 wlos.elf-wlos.o
+                0x0000000038000000                main
+ .mprjram       0x00000000380000b0      0x28c wlos.elf-qsort.o
+                0x00000000380000b0                partition
+                0x0000000038000124                sort
+                0x00000000380002ec                qsort
+ .mprjram       0x000000003800033c       0x3c wlos.elf-fir.o
+                0x000000003800033c                fir
+
+.dataram        0x0000000038004000      0x840 load address 0x0000000010000540
+                0x0000000038004000                . = ALIGN (0x8)
+                0x0000000038004000                _fsram_data = .
+ .dataram       0x0000000038004000      0x840 wlos.elf-fir.o
+                0x0000000038004000                taps
+                0x0000000038004040                X
+                0x0000000038004440                Y
+                0x0000000000000600                PROVIDE (_fstack = (ORIGIN (dff2) + LENGTH (dff2)))
+                0x00000000100001a0                PROVIDE (_fdata_rom = LOADADDR (.data))
+                [!provide]                        PROVIDE (_edata_rom = (LOADADDR (.data) + SIZEOF (.data)))
+                0x0000000038000378                PROVIDE (_esram = (ORIGIN (mprjram) + SIZEOF (.mprjram)))
+                0x00000000100001c8                PROVIDE (_esram_rom = LOADADDR (.mprjram))
+                0x0000000038004840                PROVIDE (_esram_data = (ORIGIN (dataram) + SIZEOF (.dataram)))
+                0x0000000010000540                PROVIDE (_esram_data_rom = LOADADDR (.dataram))
+LOAD wlos.elf-crt0_vex.o
+LOAD wlos.elf-isr.o
+LOAD wlos.elf-wlos.o
+LOAD wlos.elf-qsort.o
+LOAD wlos.elf-fir.o
+OUTPUT(wlos.elf elf32-littleriscv)
+
+.riscv.attributes
+                0x0000000000000000       0x20
+ .riscv.attributes
+                0x0000000000000000       0x1e wlos.elf-crt0_vex.o
+ .riscv.attributes
+                0x000000000000001e       0x20 wlos.elf-isr.o
+ .riscv.attributes
+                0x000000000000003e       0x20 wlos.elf-wlos.o
+ .riscv.attributes
+                0x000000000000005e       0x1c wlos.elf-qsort.o
+ .riscv.attributes
+                0x000000000000007a       0x1c wlos.elf-fir.o
+
+.comment        0x0000000000000000       0x1b
+ .comment       0x0000000000000000       0x1b wlos.elf-isr.o
+                                         0x1c (size before relaxing)
+ .comment       0x000000000000001b       0x1c wlos.elf-wlos.o
+ .comment       0x000000000000001b       0x1c wlos.elf-qsort.o
+ .comment       0x000000000000001b       0x1c wlos.elf-fir.o
+
+.debug_line     0x0000000000000000      0xb55
+ .debug_line    0x0000000000000000      0x240 wlos.elf-crt0_vex.o
+ .debug_line    0x0000000000000240       0xc5 wlos.elf-isr.o
+ .debug_line    0x0000000000000305      0x2b1 wlos.elf-wlos.o
+ .debug_line    0x00000000000005b6      0x4ae wlos.elf-qsort.o
+ .debug_line    0x0000000000000a64       0xf1 wlos.elf-fir.o
+
+.debug_line_str
+                0x0000000000000000       0xe5
+ .debug_line_str
+                0x0000000000000000       0x3f wlos.elf-crt0_vex.o
+ .debug_line_str
+                0x000000000000003f       0x62 wlos.elf-isr.o
+                                         0xc7 (size before relaxing)
+ .debug_line_str
+                0x00000000000000a1       0x36 wlos.elf-wlos.o
+                                         0xea (size before relaxing)
+ .debug_line_str
+                0x00000000000000d7        0x8 wlos.elf-qsort.o
+                                         0x6a (size before relaxing)
+ .debug_line_str
+                0x00000000000000df        0x6 wlos.elf-fir.o
+                                         0xa5 (size before relaxing)
+
+.debug_info     0x0000000000000000      0x83c
+ .debug_info    0x0000000000000000       0x25 wlos.elf-crt0_vex.o
+ .debug_info    0x0000000000000025      0x11b wlos.elf-isr.o
+ .debug_info    0x0000000000000140      0x1bd wlos.elf-wlos.o
+ .debug_info    0x00000000000002fd      0x454 wlos.elf-qsort.o
+ .debug_info    0x0000000000000751       0xeb wlos.elf-fir.o
+
+.debug_abbrev   0x0000000000000000      0x48c
+ .debug_abbrev  0x0000000000000000       0x14 wlos.elf-crt0_vex.o
+ .debug_abbrev  0x0000000000000014       0xe3 wlos.elf-isr.o
+ .debug_abbrev  0x00000000000000f7      0x169 wlos.elf-wlos.o
+ .debug_abbrev  0x0000000000000260      0x191 wlos.elf-qsort.o
+ .debug_abbrev  0x00000000000003f1       0x9b wlos.elf-fir.o
+
+.debug_aranges  0x0000000000000000       0xb0
+ .debug_aranges
+                0x0000000000000000       0x20 wlos.elf-crt0_vex.o
+ .debug_aranges
+                0x0000000000000020       0x20 wlos.elf-isr.o
+ .debug_aranges
+                0x0000000000000040       0x20 wlos.elf-wlos.o
+ .debug_aranges
+                0x0000000000000060       0x30 wlos.elf-qsort.o
+ .debug_aranges
+                0x0000000000000090       0x20 wlos.elf-fir.o
+
+.debug_str      0x0000000000000000      0x187
+ .debug_str     0x0000000000000000       0x4b wlos.elf-crt0_vex.o
+ .debug_str     0x000000000000004b       0xdf wlos.elf-isr.o
+                                        0x120 (size before relaxing)
+ .debug_str     0x000000000000012a       0x43 wlos.elf-wlos.o
+                                        0x14a (size before relaxing)
+ .debug_str     0x000000000000016d       0x15 wlos.elf-qsort.o
+                                         0x88 (size before relaxing)
+ .debug_str     0x0000000000000182        0x5 wlos.elf-fir.o
+                                         0xed (size before relaxing)
+
+.debug_loclists
+                0x0000000000000000      0x35f
+ .debug_loclists
+                0x0000000000000000       0x28 wlos.elf-isr.o
+ .debug_loclists
+                0x0000000000000028       0x60 wlos.elf-wlos.o
+ .debug_loclists
+                0x0000000000000088      0x2d7 wlos.elf-qsort.o
+
+.debug_frame    0x0000000000000000      0x100
+ .debug_frame   0x0000000000000000       0x20 wlos.elf-isr.o
+ .debug_frame   0x0000000000000020       0x2c wlos.elf-wlos.o
+ .debug_frame   0x000000000000004c       0x94 wlos.elf-qsort.o
+ .debug_frame   0x00000000000000e0       0x20 wlos.elf-fir.o
+
+.debug_rnglists
+                0x0000000000000000       0x67
+ .debug_rnglists
+                0x0000000000000000       0x16 wlos.elf-wlos.o
+ .debug_rnglists
+                0x0000000000000016       0x3b wlos.elf-qsort.o
+ .debug_rnglists
+                0x0000000000000051       0x16 wlos.elf-fir.o
