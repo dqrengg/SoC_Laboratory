@@ -9,3 +9,7 @@ HKUST 25Spring EESM6000C System-on-Chip (SoC) Laboratory
 
 <!--
 - [Lab3 environment setting guide](https://github.com/dqrengg/SoC_Laboratory/tree/main/Lab3#environment-setting-for-simulation)-->
+
+## Reference
+
+- [caravel-soc_fpga-lab](https://github.com/bol-edu/caravel-soc_fpga-lab)
